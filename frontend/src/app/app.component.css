@@ -35,6 +35,10 @@ h1, h2 {
   background: #f9fafb;
 }
 
+.landmark-group + .landmark-group {
+  margin-top: 16px;
+}
+
 .landmark-group legend {
   font-size: 1.25rem;
   font-weight: 700;
@@ -67,6 +71,47 @@ h1, h2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+.coord-fields.single {
+  grid-template-columns: 1fr;
+}
+
+.coord-fields.single.unit-field {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+.unit {
+  color: #6b7280;
+  font-size: 13px;
+  padding-right: 4px;
+}
+
+.imc-box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+}
+
+.imc-box strong {
+  font-size: 1.05rem;
+}
+
+.imc-box.empty {
+  color: #9ca3af;
+}
+
+.field-hint {
+  margin: 4px 0 0;
+  color: #6b7280;
+  font-size: 12px;
 }
 
 .optional-toggle {

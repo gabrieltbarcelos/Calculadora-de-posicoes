@@ -1,36 +1,51 @@
 <main class="page">
   <header>
     <h1>Calculadora de Posições</h1>
-    <p>Informe os marcos anatômicos no plano. A origem (0, 0) é o umbigo. Direita e esquerda são da pessoa (vista anterior: D à esquerda da imagem).</p>
+    <p>Informe os marcos anatômicos no plano. A origem (0, 0) é o umbigo. X positivo à direita do eixo Y; X negativo à esquerda.</p>
   </header>
 
   <section class="layout">
     <div class="panel inputs-panel">
       <fieldset class="landmark-group">
         <legend>Marcos anatômicos</legend>
-        <p class="group-hint">Cada marco guarda um par (X, Y) no plano cartesiano.</p>
+        <p class="group-hint">Marcos com X e Y no plano. Os limites laterais do abdome usam só X: o eixo X toca a silhueta nesses pontos (Y = 0).</p>
 
         @for (item of requiredLandmarks(); track item.id) {
           <div class="landmark-row">
             <label class="landmark-label" [attr.for]="'x-' + item.id">{{ item.label }}</label>
-            <div class="coord-fields">
-              <input
-                [id]="'x-' + item.id"
-                type="number"
-                step="any"
-                [ngModel]="item.x"
-                (ngModelChange)="setCoord(item.id, 'x', $event)"
-                [attr.aria-label]="item.label + ' coordenada X'"
-                placeholder="X">
-              <input
-                [id]="'y-' + item.id"
-                type="number"
-                step="any"
-                [ngModel]="item.y"
-                (ngModelChange)="setCoord(item.id, 'y', $event)"
-                [attr.aria-label]="item.label + ' coordenada Y'"
-                placeholder="Y">
-            </div>
+            @if (item.xOnly) {
+              <div class="coord-fields single">
+                <input
+                  [id]="'x-' + item.id"
+                  type="number"
+                  step="any"
+                  min="0"
+                  [ngModel]="item.x"
+                  (ngModelChange)="setCoord(item.id, 'x', $event)"
+                  [attr.aria-label]="item.label + ' coordenada X'"
+                  placeholder="X">
+              </div>
+              <p class="field-hint">Apenas X. Y = 0 (altura do umbigo). A silhueta intercepta o eixo X neste valor.</p>
+            } @else {
+              <div class="coord-fields">
+                <input
+                  [id]="'x-' + item.id"
+                  type="number"
+                  step="any"
+                  [ngModel]="item.x"
+                  (ngModelChange)="setCoord(item.id, 'x', $event)"
+                  [attr.aria-label]="item.label + ' coordenada X'"
+                  placeholder="X">
+                <input
+                  [id]="'y-' + item.id"
+                  type="number"
+                  step="any"
+                  [ngModel]="item.y"
+                  (ngModelChange)="setCoord(item.id, 'y', $event)"
+                  [attr.aria-label]="item.label + ' coordenada Y'"
+                  placeholder="Y">
+              </div>
+            }
           </div>
         }
 
@@ -72,6 +87,75 @@
         }
       </fieldset>
 
+      <fieldset class="landmark-group">
+        <legend>Dados antropométricos</legend>
+        <p class="group-hint">O IMC é calculado automaticamente a partir da altura e do peso.</p>
+
+        <div class="landmark-row">
+          <label class="landmark-label" for="height">Altura</label>
+          <div class="coord-fields single unit-field">
+            <input
+              id="height"
+              type="number"
+              step="any"
+              min="0"
+              [ngModel]="height()"
+              (ngModelChange)="setNumeric('height', $event)"
+              aria-label="Altura"
+              placeholder="Ex.: 175 ou 1,75">
+            <span class="unit">cm ou m</span>
+          </div>
+        </div>
+
+        <div class="landmark-row">
+          <label class="landmark-label" for="weight">Peso</label>
+          <div class="coord-fields single unit-field">
+            <input
+              id="weight"
+              type="number"
+              step="any"
+              min="0"
+              [ngModel]="weight()"
+              (ngModelChange)="setNumeric('weight', $event)"
+              aria-label="Peso"
+              placeholder="Ex.: 70">
+            <span class="unit">kg</span>
+          </div>
+        </div>
+
+        <div class="landmark-row">
+          <label class="landmark-label" for="bmi">IMC</label>
+          <div
+            id="bmi"
+            class="imc-box"
+            [class.empty]="bmi() == null"
+            aria-live="polite">
+            @if (bmi() == null) {
+              <span>Calculado automaticamente</span>
+            } @else {
+              <strong>{{ bmi() | number:'1.1-1' }}</strong>
+              <span>kg/m² · {{ bmiClass() }}</span>
+            }
+          </div>
+        </div>
+
+        <div class="landmark-row">
+          <label class="landmark-label" for="abdominal-circumference">Circunferência abdominal</label>
+          <div class="coord-fields single unit-field">
+            <input
+              id="abdominal-circumference"
+              type="number"
+              step="any"
+              min="0"
+              [ngModel]="abdominalCircumference()"
+              (ngModelChange)="setNumeric('abdominalCircumference', $event)"
+              aria-label="Circunferência abdominal"
+              placeholder="Ex.: 92">
+            <span class="unit">cm</span>
+          </div>
+        </div>
+      </fieldset>
+
       <div class="actions">
         <button type="button" class="primary" (click)="calculate()">Calcular</button>
       </div>
@@ -98,12 +182,12 @@
 
     <div class="panel graph-panel">
       <h2>Plano cartesiano sobre o torso</h2>
-      <p class="graph-hint">Vista anterior: X positivo = direita da pessoa (lado D). Y positivo sobe em direção à cabeça.</p>
+      <p class="graph-hint">X positivo à direita do eixo Y. Y positivo sobe em direção à cabeça. D = direita, E = esquerda.</p>
 
       <svg
         [attr.viewBox]="'0 0 ' + chart.width + ' ' + chart.height"
         role="img"
-        aria-label="Silhueta do torso humano com plano cartesiano cuja origem está no umbigo">
+        aria-label="Torso ampliado sem cabeça nem braços, com origem no umbigo">
         <defs>
           <linearGradient id="torsoFill" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stop-color="#d7e3ef"/>
@@ -147,14 +231,14 @@
             x2="0"
             [attr.y2]="view().maxY"/>
 
-          <circle class="navel-ring" cx="0" cy="0" r="1.7"/>
-          <circle class="navel" cx="0" cy="0" r="0.85"/>
+          <circle class="navel-ring" cx="0" cy="0" r="0.7"/>
+          <circle class="navel" cx="0" cy="0" r="0.35"/>
         </g>
 
-        <text class="axis-label" [attr.x]="svgX(30) - 4" [attr.y]="svgY(0) - 12">X</text>
-        <text class="axis-label" [attr.x]="svgX(0) + 10" [attr.y]="svgY(view().maxY) + 18">Y</text>
-        <text class="side-label" [attr.x]="svgX(26)" [attr.y]="svgY(8)">D</text>
-        <text class="side-label" [attr.x]="svgX(-26)" [attr.y]="svgY(8)">E</text>
+        <text class="axis-label" [attr.x]="svgX(abdomenRightX()) + 8" [attr.y]="svgY(0) - 14">X</text>
+        <text class="axis-label" [attr.x]="svgX(0) + 10" [attr.y]="svgY(view().maxY) + 16">Y</text>
+        <text class="side-label" [attr.x]="svgX(abdomenRightX()) + 16" [attr.y]="svgY(6)">D</text>
+        <text class="side-label" [attr.x]="svgX(abdomenLeftX()) - 16" [attr.y]="svgY(6)">E</text>
         <text class="navel-label" [attr.x]="svgX(0) + 12" [attr.y]="svgY(0) + 18">umbigo (0, 0)</text>
 
         @for (item of plottedLandmarks(); track item.id) {
@@ -166,9 +250,9 @@
               class="landmark-point"
               [class.optional-point]="item.optional"/>
             <text
-              [attr.x]="svgX(item.x) + (item.x > 0 ? -10 : 10)"
+              [attr.x]="svgX(item.x) + (item.x > 0 ? 10 : -10)"
               [attr.y]="svgY(item.y) + (item.y === 0 && item.x !== 0 ? 16 : -9)"
-              [attr.text-anchor]="item.x > 0 ? 'end' : 'start'"
+              [attr.text-anchor]="item.x > 0 ? 'start' : 'end'"
               class="landmark-code"
               [class.optional-label]="item.optional">
               {{ item.code }} ({{ item.x | number:'1.1-1' }}, {{ item.y | number:'1.1-1' }})
