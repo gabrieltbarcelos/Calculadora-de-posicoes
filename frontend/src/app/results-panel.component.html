@@ -1,0 +1,91 @@
+<div class="panel results-panel">
+  <h2>Sugestão</h2>
+  @if (store.result(); as result) {
+    <p class="status" [class.ok]="result.configurationValid" [class.bad]="!result.configurationValid">
+      {{ result.configurationValid ? 'Configuração aceita' : 'Configuração com regras pendentes' }}
+      @if (!result.generatedByPreset) {
+        <span> · posição ajustada</span>
+      }
+    </p>
+    <p class="group-hint">
+      {{ variantLabel() }} · lado {{ result.accessSide === 'LEFT' ? 'esquerdo' : 'direito' }} ·
+      docking {{ result.suggestedCartPosition }}
+      @if (result.doubleDockingRecommended) {
+        · double docking recomendado
+      }
+      @if (result.redockingAllowed) {
+        · redocking permitido
+      }
+    </p>
+
+    <h3>Portais</h3>
+    @for (port of result.ports; track port.role) {
+      <div class="result-row">
+        <strong>{{ port.label }}</strong>
+        <span>X {{ port.x | number:'1.1-1' }}</span>
+        <span>Y {{ port.y | number:'1.1-1' }}</span>
+      </div>
+    }
+    <p class="field-hint">Arraste um portal no gráfico para reavaliar as regras sem gerar outra sugestão.</p>
+
+    @if (result.admissibleRange ?? store.preservedBand(); as range) {
+      <h3>Faixa admissível</h3>
+      <p>
+        Deslocamento de {{ range.offsetMinCm | number:'1.1-1' }} a {{ range.offsetMaxCm | number:'1.1-1' }} cm.
+        Recomendado: {{ range.recommendedOffsetCm | number:'1.1-1' }} cm.
+        Espaçamento: {{ range.spacingCm | number:'1.1-1' }} cm.
+      </p>
+    }
+
+    <h3>Distâncias</h3>
+    <p>Câmera–target: {{ result.cameraTargetDistance | number:'1.1-1' }} cm. Target ({{ result.target.x | number:'1.1-1' }}, {{ result.target.y | number:'1.1-1' }}).</p>
+    @for (pair of result.interportalDistances; track pair.fromRole + pair.toRole) {
+      <div class="result-row">
+        <span>{{ portLabel(pair.fromRole) }} – {{ portLabel(pair.toRole) }}</span>
+        <strong>{{ pair.distanceCm | number:'1.1-1' }} cm</strong>
+      </div>
+    }
+    @for (bone of closestBones(); track bone.portRole) {
+      <div class="result-row">
+        <span>{{ portLabel(bone.portRole) }} ao osso mais próximo ({{ bone.bone }})</span>
+        <strong>{{ bone.distanceCm | number:'1.1-1' }} cm</strong>
+      </div>
+    }
+
+    <h3>Regras</h3>
+    <ul class="rules">
+      @for (rule of result.constraints; track rule.id) {
+        <li [class.ok]="rule.passed" [class.bad]="!rule.passed">
+          <strong>{{ rule.id }}</strong> {{ rule.passed ? 'cumprida' : 'pendente' }}
+          <small>{{ rule.detail }}</small>
+        </li>
+      }
+    </ul>
+
+    @if (result.warnings.length > 0) {
+      <h3>Alertas</h3>
+      <ul class="warnings">
+        @for (warning of result.warnings; track warning) {
+          <li>{{ warning }}</li>
+        }
+      </ul>
+    }
+
+    <h3>Justificativa</h3>
+    @for (line of result.rationale; track line) {
+      <p>{{ line }}</p>
+    }
+
+    <details>
+      <summary>Distâncias até o campo-alvo</summary>
+      @for (distance of result.workspaceDistances; track distance.portRole + distance.sample) {
+        <div class="result-row">
+          <span>{{ portLabel(distance.portRole) }} · {{ distance.sample }}</span>
+          <span>{{ distance.distanceCm | number:'1.1-1' }} cm</span>
+        </div>
+      }
+    </details>
+  } @else {
+    <p>Nenhuma sugestão ainda. Preencha a anatomia, a hérnia e a técnica.</p>
+  }
+</div>

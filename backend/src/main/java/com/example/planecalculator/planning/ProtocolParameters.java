@@ -1,0 +1,29 @@
+package com.example.planecalculator.planning;
+
+public record ProtocolParameters(
+        double interportalIdealCm,
+        double interportalMinCm,
+        double interportalManufacturerMinCm,
+        double interportalManufacturerMaxCm,
+        double cameraTargetMinCm,
+        double cameraTargetMaxCm,
+        double cameraTargetPreferredMinCm,
+        double cameraTargetPreferredMaxCm,
+        double boneClearanceMinCm,
+        double assistantToRoboticMinCm,
+        double tappPortToTargetMinCm,
+        double tappPortToTargetMaxCm,
+        double tarmLineaAlbaOffsetCm,
+        double etepCostalCaudalOffsetCm,
+        double etepMidlineLateralMinCm,
+        double etepMidlineLateralMaxCm,
+        double etepUmbilicalCaudalOffsetCm,
+        double etepLeftParamedianAbovePubisCm,
+        double etepRightParamedianAbovePubisCm,
+        double subxiphoidRelevantCm,
+        double meshOverlapCm,
+        double collinearityToleranceCm,
+        double targetCranialThresholdCm,
+        double targetCaudalThresholdCm,
+        double samplingStepCm
+) {}

@@ -1,0 +1,110 @@
+<div class="panel graph-panel">
+  <h2>Plano do torso</h2>
+  <p class="graph-hint">X positivo à direita. Y positivo em direção à cabeça. A faixa azul é o conjunto de posições da técnica que passou nas regras.</p>
+  @if (store.drawMode() !== 'none') {
+    <div class="draw-bar">
+      <span>{{ store.drawMode() === 'workspace' ? 'Marcando o campo-alvo' : 'Marcando área de exclusão' }} · {{ store.draftPoints().length }} pontos</span>
+      <button type="button" class="secondary" (click)="store.undoDraft()">Desfazer</button>
+      <button type="button" class="secondary" (click)="store.closeDraft()" [disabled]="store.draftPoints().length < 3">Fechar polígono</button>
+      <button type="button" class="secondary" (click)="store.cancelDraft()">Cancelar</button>
+    </div>
+  }
+
+  <svg
+    #svg
+    [attr.viewBox]="'0 0 ' + chart.width + ' ' + chart.height"
+    role="img"
+    aria-label="Torso com o plano cartesiano, a hérnia e os portais sugeridos"
+    [class.drawing]="store.drawMode() !== 'none'"
+    (click)="onPlaneClick($event)"
+    (pointermove)="onPointerMove($event)"
+    (pointerup)="onPointerUp()">
+    <defs>
+      <linearGradient id="torsoFill" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#d7e3ef"/>
+        <stop offset="50%" stop-color="#c5d6e6"/>
+        <stop offset="100%" stop-color="#d7e3ef"/>
+      </linearGradient>
+    </defs>
+    <rect class="chart-bg" x="0" y="0" [attr.width]="chart.width" [attr.height]="chart.height"/>
+    <g #plane [attr.transform]="planeTransform()">
+      <path class="torso" [attr.d]="torsoPath()"/>
+      @for (x of gridX(); track x) {
+        <line class="grid-line" [attr.x1]="x" [attr.y1]="view().minY" [attr.x2]="x" [attr.y2]="view().maxY"/>
+      }
+      @for (y of gridY(); track y) {
+        <line class="grid-line" [attr.x1]="view().minX" [attr.y1]="y" [attr.x2]="view().maxX" [attr.y2]="y"/>
+      }
+      <line class="axis" [attr.x1]="view().minX" y1="0" [attr.x2]="view().maxX" y2="0"/>
+      <line class="axis" x1="0" [attr.y1]="view().minY" x2="0" [attr.y2]="view().maxY"/>
+      @if (store.abdomenPolygon().length > 2) {
+        <path class="abdomen-wall" [attr.d]="polygon(store.abdomenPolygon())"/>
+      }
+      @if (store.bandPolygon().length > 2) {
+        <path class="admissible-band" [attr.d]="polygon(store.bandPolygon())"/>
+      }
+      @for (zone of store.exclusions(); track zone.id) {
+        <path [attr.d]="polygon(zone.polygon)" [class]="zone.category === 'FORBIDDEN' ? 'zone forbidden-zone' : 'zone avoid-zone'"/>
+      }
+      @if (store.workspacePolygon().length > 2) {
+        <path class="workspace" [attr.d]="polygon(store.workspacePolygon())"/>
+      }
+      @if (store.defectPolygon().length > 2) {
+        <path class="defect" [attr.d]="polygon(store.defectPolygon())"/>
+      }
+      @if (store.draftPoints().length > 0) {
+        <polyline class="draft" [attr.points]="store.draftPoints().map(point => point.x + ',' + point.y).join(' ')"/>
+        @for (point of store.draftPoints(); track $index) {
+          <circle class="draft-point" [attr.cx]="point.x" [attr.cy]="point.y" r="0.45"/>
+        }
+      }
+      <circle class="navel-ring" cx="0" cy="0" r="0.7"/>
+      <circle class="navel" cx="0" cy="0" r="0.35"/>
+      @if (store.previewTarget(); as target) {
+        <g class="target">
+          <line [attr.x1]="target.x - 1.1" [attr.y1]="target.y" [attr.x2]="target.x + 1.1" [attr.y2]="target.y"/>
+          <line [attr.x1]="target.x" [attr.y1]="target.y - 1.1" [attr.x2]="target.x" [attr.y2]="target.y + 1.1"/>
+          <circle [attr.cx]="target.x" [attr.cy]="target.y" r="0.35"/>
+        </g>
+      }
+    </g>
+
+    <text class="axis-label" [attr.x]="svgX(abdomenRightX()) + 8" [attr.y]="svgY(0) - 14">X</text>
+    <text class="axis-label" [attr.x]="svgX(0) + 10" [attr.y]="svgY(view().maxY) + 16">Y</text>
+    <text class="side-label" [attr.x]="svgX(abdomenRightX()) + 16" [attr.y]="svgY(6)">D</text>
+    <text class="side-label" [attr.x]="svgX(abdomenLeftX()) - 16" [attr.y]="svgY(6)">E</text>
+    <text class="navel-label" [attr.x]="svgX(0) + 12" [attr.y]="svgY(0) + 18">umbigo (0, 0)</text>
+
+    @for (item of store.plottedLandmarks(); track item.id) {
+      <g>
+        <circle [attr.cx]="svgX(item.x)" [attr.cy]="svgY(item.y)" r="6" class="landmark-point" [class.optional-point]="item.optional"/>
+        <text
+          [attr.x]="svgX(item.x) + (item.x > 0 ? 10 : -10)"
+          [attr.y]="svgY(item.y) + (item.y === 0 && item.x !== 0 ? 16 : -9)"
+          [attr.text-anchor]="item.x > 0 ? 'start' : 'end'"
+          class="landmark-code"
+          [class.optional-label]="item.optional">
+          {{ item.code }}
+        </text>
+      </g>
+    }
+
+    @for (port of store.result()?.ports ?? []; track port.role) {
+      <g [class]="portClass(port.role)" (pointerdown)="startDrag($event, port)" (click)="$event.stopPropagation()">
+        <circle [attr.cx]="svgX(port.x)" [attr.cy]="svgY(port.y)" r="11"/>
+        <text [attr.x]="svgX(port.x) + 14" [attr.y]="svgY(port.y) - 8">{{ port.label }}</text>
+      </g>
+    }
+  </svg>
+
+  <ul class="legend">
+    <li><i class="swatch defect-swatch"></i> Hérnia</li>
+    <li><i class="swatch workspace-swatch"></i> Campo-alvo</li>
+    <li><i class="swatch band-swatch"></i> Faixa admissível</li>
+    <li><i class="swatch forbidden-swatch"></i> Proibida</li>
+    <li><i class="swatch avoid-swatch"></i> Evitar</li>
+    <li><i class="swatch camera-swatch"></i> Câmera</li>
+    <li><i class="swatch working-swatch"></i> Portal</li>
+    <li><i class="swatch assistant-swatch"></i> Auxiliar</li>
+  </ul>
+</div>

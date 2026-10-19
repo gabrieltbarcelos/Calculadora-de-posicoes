@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.example.planecalculator.planning.ProtocolServiceTest
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.150 s -- in com.example.planecalculator.planning.ProtocolServiceTest

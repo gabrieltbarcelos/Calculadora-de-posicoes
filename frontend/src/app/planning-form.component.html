@@ -1,0 +1,272 @@
+<div class="panel inputs-panel">
+  <fieldset class="landmark-group">
+    <legend>Marcos anatômicos</legend>
+    <p class="group-hint">Origem no umbigo. X positivo à direita do paciente, Y positivo cranial. Medidas em centímetros, de preferência após a insuflação.</p>
+
+    @for (item of store.requiredLandmarks(); track item.id) {
+      <div class="landmark-row">
+        <label class="landmark-label" [attr.for]="'x-' + item.id">{{ item.label }}</label>
+        @if (item.xOnly) {
+          <div class="coord-fields single">
+            <input [id]="'x-' + item.id" type="number" step="any" min="0" [ngModel]="item.x" (ngModelChange)="store.setCoord(item.id, 'x', $event)" [attr.aria-label]="item.label + ' X'" placeholder="X">
+          </div>
+          <p class="field-hint">Apenas a distância lateral. Y fica em 0.</p>
+        } @else {
+          <div class="coord-fields">
+            <input [id]="'x-' + item.id" type="number" step="any" [ngModel]="item.x" (ngModelChange)="store.setCoord(item.id, 'x', $event)" [attr.aria-label]="item.label + ' X'" placeholder="X">
+            <input [id]="'y-' + item.id" type="number" step="any" [ngModel]="item.y" (ngModelChange)="store.setCoord(item.id, 'y', $event)" [attr.aria-label]="item.label + ' Y'" placeholder="Y">
+          </div>
+        }
+      </div>
+    }
+
+    <label class="optional-toggle">
+      <input type="checkbox" [ngModel]="store.includeRectus()" (ngModelChange)="store.includeRectus.set($event)">
+      <span>
+        Incluir limites laterais dos músculos retos
+        <small>usado por r-TAPP, TARM/TARUP, eTEP e RoboTAR</small>
+      </span>
+    </label>
+
+    @if (store.includeRectus()) {
+      @for (item of store.optionalLandmarks(); track item.id) {
+        <div class="landmark-row optional">
+          <label class="landmark-label" [attr.for]="'x-' + item.id">{{ item.label }}</label>
+          <div class="coord-fields">
+            <input [id]="'x-' + item.id" type="number" step="any" [ngModel]="item.x" (ngModelChange)="store.setCoord(item.id, 'x', $event)" placeholder="X">
+            <input [id]="'y-' + item.id" type="number" step="any" [ngModel]="item.y" (ngModelChange)="store.setCoord(item.id, 'y', $event)" placeholder="Y">
+          </div>
+        </div>
+      }
+    }
+  </fieldset>
+
+  <fieldset class="landmark-group">
+    <legend>Dados antropométricos</legend>
+    <div class="landmark-row">
+      <label class="landmark-label" for="height">Altura</label>
+      <div class="coord-fields single unit-field">
+        <input id="height" type="number" step="any" min="0" [ngModel]="store.height()" (ngModelChange)="store.setNumeric('height', $event)" placeholder="175 ou 1,75">
+        <span class="unit">cm ou m</span>
+      </div>
+    </div>
+    <div class="landmark-row">
+      <label class="landmark-label" for="weight">Peso</label>
+      <div class="coord-fields single unit-field">
+        <input id="weight" type="number" step="any" min="0" [ngModel]="store.weight()" (ngModelChange)="store.setNumeric('weight', $event)" placeholder="70">
+        <span class="unit">kg</span>
+      </div>
+    </div>
+    <div class="landmark-row">
+      <label class="landmark-label" for="bmi">IMC</label>
+      <div id="bmi" class="imc-box" [class.empty]="store.bmi() == null">
+        @if (store.bmi() == null) {
+          <span>Calculado automaticamente</span>
+        } @else {
+          <strong>{{ store.bmi() | number:'1.1-1' }}</strong>
+          <span>kg/m² · {{ store.bmiClass() }}</span>
+        }
+      </div>
+    </div>
+    <div class="landmark-row">
+      <label class="landmark-label" for="abdominal-circumference">Circunferência abdominal</label>
+      <div class="coord-fields single unit-field">
+        <input id="abdominal-circumference" type="number" step="any" min="0" [ngModel]="store.abdominalCircumference()" (ngModelChange)="store.setNumeric('abdominalCircumference', $event)" placeholder="92">
+        <span class="unit">cm</span>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="landmark-group">
+    <legend>Hérnia</legend>
+    <p class="group-hint">Um defeito principal entra na geometria. O número de defeitos fica registrado.</p>
+    <div class="landmark-row">
+      <label class="landmark-label">Centro do defeito</label>
+      <div class="coord-fields">
+        <input type="number" step="any" [ngModel]="store.defectX()" (ngModelChange)="store.setNumeric('defectX', $event)" placeholder="X" aria-label="Centro da hérnia X">
+        <input type="number" step="any" [ngModel]="store.defectY()" (ngModelChange)="store.setNumeric('defectY', $event)" placeholder="Y" aria-label="Centro da hérnia Y">
+      </div>
+    </div>
+    <div class="landmark-row">
+      <label class="landmark-label" for="defect-width">Largura transversal</label>
+      <div class="coord-fields single unit-field">
+        <input id="defect-width" type="number" step="any" min="0" [ngModel]="store.defectWidth()" (ngModelChange)="store.setNumeric('defectWidth', $event)" placeholder="4">
+        <span class="unit">cm</span>
+      </div>
+    </div>
+    <div class="landmark-row">
+      <label class="landmark-label" for="defect-height">Extensão craniocaudal</label>
+      <div class="coord-fields single unit-field">
+        <input id="defect-height" type="number" step="any" min="0" [ngModel]="store.defectHeight()" (ngModelChange)="store.setNumeric('defectHeight', $event)" placeholder="6">
+        <span class="unit">cm</span>
+      </div>
+    </div>
+    <div class="landmark-row">
+      <label class="landmark-label" for="defect-count">Número de defeitos</label>
+      <input id="defect-count" type="number" min="1" step="1" [ngModel]="store.numberOfDefects()" (ngModelChange)="store.numberOfDefects.set(+$event || 1)">
+    </div>
+    <div class="landmark-row">
+      <label class="landmark-label" for="ehs">Localização EHS</label>
+      <input id="ehs" type="text" [ngModel]="store.ehsLocation()" (ngModelChange)="store.ehsLocation.set($event)" placeholder="Opcional, não altera o cálculo">
+    </div>
+    @if (store.defectLimits(); as limits) {
+      <p class="field-hint">
+        Limites: cranial {{ limits.cranial | number:'1.1-1' }}, caudal {{ limits.caudal | number:'1.1-1' }},
+        direito {{ limits.right | number:'1.1-1' }}, esquerdo {{ limits.left | number:'1.1-1' }}.
+      </p>
+    }
+  </fieldset>
+
+  <fieldset class="landmark-group">
+    <legend>Campo cirúrgico-alvo</legend>
+    <p class="group-hint">O target é o centro do campo. A área calculada expande a hérnia pela sobreposição de tela.</p>
+    <label class="optional-toggle">
+      <input type="radio" name="workspace" value="CALCULATED" [ngModel]="store.workspaceMode()" (ngModelChange)="store.workspaceMode.set($event)">
+      <span>Calcular a partir do defeito</span>
+    </label>
+    <label class="optional-toggle">
+      <input type="radio" name="workspace" value="CUSTOM" [ngModel]="store.workspaceMode()" (ngModelChange)="store.workspaceMode.set($event)">
+      <span>Marcar no gráfico</span>
+    </label>
+    @if (store.workspaceMode() === 'CUSTOM') {
+      <div class="actions">
+        <button type="button" class="secondary" (click)="store.startWorkspaceDrawing()">Marcar campo</button>
+        <button type="button" class="secondary" (click)="store.clearWorkspace()">Limpar</button>
+      </div>
+      <p class="field-hint">{{ store.workspacePoints().length }} vértices fechados.</p>
+    }
+  </fieldset>
+
+  <fieldset class="landmark-group">
+    <legend>Áreas de exclusão</legend>
+    <div class="landmark-row">
+      <label class="landmark-label" for="exclusion-type">Tipo</label>
+      <select id="exclusion-type" [ngModel]="store.exclusionType()" (ngModelChange)="store.exclusionType.set($event)">
+        @for (option of exclusionTypes; track option[0]) {
+          <option [value]="option[0]">{{ option[1] }}</option>
+        }
+      </select>
+    </div>
+    <div class="landmark-row">
+      <label class="landmark-label" for="exclusion-category">Categoria</label>
+      <select id="exclusion-category" [ngModel]="store.exclusionCategory()" (ngModelChange)="store.exclusionCategory.set($event)">
+        @for (option of exclusionCategories; track option[0]) {
+          <option [value]="option[0]">{{ option[1] }}</option>
+        }
+      </select>
+    </div>
+    <div class="actions">
+      <button type="button" class="secondary" (click)="store.startExclusionDrawing()">Marcar área no gráfico</button>
+    </div>
+    @for (zone of store.exclusions(); track zone.id) {
+      <div class="result-row">
+        <strong>{{ exclusionTypesLabel(zone.type) }}</strong>
+        <span>{{ exclusionCategoryLabel(zone.category) }}</span>
+        <button type="button" class="remove" (click)="store.removeExclusion(zone.id)" [attr.aria-label]="'Remover área'">×</button>
+      </div>
+    }
+  </fieldset>
+
+  <fieldset class="landmark-group">
+    <legend>Procedimento</legend>
+    <div class="landmark-row">
+      <label class="landmark-label" for="platform">Plataforma</label>
+      <select id="platform" [ngModel]="store.platform()" (ngModelChange)="store.platform.set($event)">
+        <option value="DAVINCI_XI">Da Vinci Xi</option>
+        <option value="DAVINCI_X">Da Vinci X</option>
+      </select>
+      <p class="field-hint">X e Xi não mudam a geometria neste protótipo.</p>
+    </div>
+    <div class="landmark-row">
+      <label class="landmark-label" for="technique">Técnica</label>
+      <select id="technique" [ngModel]="store.technique()" (ngModelChange)="store.technique.set($event)">
+        @for (option of techniques; track option[0]) {
+          <option [value]="option[0]">{{ option[1] }}</option>
+        }
+      </select>
+    </div>
+    <div class="landmark-row">
+      <label class="landmark-label" for="access-side">Lado de acesso</label>
+      <select id="access-side" [ngModel]="store.accessSide()" (ngModelChange)="store.accessSide.set($event)">
+        <option value="AUTO">Automático</option>
+        <option value="RIGHT">Direita</option>
+        <option value="LEFT">Esquerda</option>
+      </select>
+    </div>
+    <div class="landmark-row">
+      <label class="landmark-label" for="port-count">Portais robóticos</label>
+      <select id="port-count" [ngModel]="store.numberOfRoboticPorts()" (ngModelChange)="store.numberOfRoboticPorts.set(+$event)">
+        <option [ngValue]="3">3</option>
+        <option [ngValue]="4">4</option>
+      </select>
+    </div>
+    <label class="optional-toggle">
+      <input type="checkbox" [ngModel]="store.assistantPortRequired()" (ngModelChange)="store.assistantPortRequired.set($event)">
+      <span>Portal auxiliar</span>
+    </label>
+    @if (store.technique() === 'ROBOTAR') {
+      <label class="optional-toggle">
+        <input type="checkbox" [ngModel]="store.bilateralTar()" (ngModelChange)="store.bilateralTar.set($event)">
+        <span>TAR bilateral <small>double docking como estratégia padrão</small></span>
+      </label>
+    }
+    <div class="landmark-row">
+      <label class="landmark-label" for="measurement-phase">Fase da medida</label>
+      <select id="measurement-phase" [ngModel]="store.measurementPhase()" (ngModelChange)="store.measurementPhase.set($event)">
+        <option value="AFTER_INSUFFLATION">Depois da insuflação</option>
+        <option value="BEFORE_INSUFFLATION">Antes da insuflação</option>
+      </select>
+    </div>
+    <div class="landmark-row">
+      <label class="landmark-label" for="pneumo">Pressão do pneumoperitônio</label>
+      <div class="coord-fields single unit-field">
+        <input id="pneumo" type="number" step="any" [ngModel]="store.pneumoperitoneum()" (ngModelChange)="store.setNumeric('pneumoperitoneum', $event)" placeholder="Opcional">
+        <span class="unit">mmHg</span>
+      </div>
+    </div>
+    <div class="landmark-row">
+      <label class="landmark-label" for="flexion">Flexão da mesa</label>
+      <div class="coord-fields single unit-field">
+        <input id="flexion" type="number" step="any" [ngModel]="store.tableFlexion()" (ngModelChange)="store.setNumeric('tableFlexion', $event)" placeholder="Opcional">
+        <span class="unit">graus</span>
+      </div>
+    </div>
+    <div class="landmark-row">
+      <label class="landmark-label" for="position">Posição do paciente</label>
+      <input id="position" type="text" [ngModel]="store.patientPosition()" (ngModelChange)="store.patientPosition.set($event)" placeholder="Opcional">
+    </div>
+  </fieldset>
+
+  <details class="landmark-group protocol">
+    <summary>Parâmetros do protocolo v0.1</summary>
+    <p class="group-hint">Valores editáveis. Eles são gravados antes de cada sugestão.</p>
+    @if (store.protocol(); as protocol) {
+      @for (field of protocolFields; track field.key) {
+        <div class="landmark-row">
+          <label class="landmark-label" [attr.for]="field.key">{{ field.label }}</label>
+          <div class="coord-fields single unit-field">
+            <input [id]="field.key" type="number" step="any" [ngModel]="protocol[field.key]" (ngModelChange)="store.setProtocolField(field.key, $event)">
+            <span class="unit">cm</span>
+          </div>
+        </div>
+      }
+      <div class="actions">
+        <button type="button" class="secondary" (click)="saveProtocol.emit()">Salvar parâmetros</button>
+      </div>
+      @if (store.protocolMessage()) {
+        <p class="field-hint">{{ store.protocolMessage() }}</p>
+      }
+    } @else {
+      <p class="field-hint">Carregando protocolo do servidor.</p>
+    }
+  </details>
+
+  <div class="actions">
+    <button type="button" class="primary" [disabled]="store.loading()" (click)="suggest.emit()">
+      {{ store.loading() ? 'Calculando...' : 'Sugerir posicionamento' }}
+    </button>
+  </div>
+  @if (store.error()) {
+    <p class="error">{{ store.error() }}</p>
+  }
+</div>
